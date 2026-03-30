@@ -1,0 +1,25 @@
+# Java
+target/
+*.class
+*.jar
+*.war
+.mvn/
+
+# Node
+node_modules/
+dist/
+.env
+.env.local
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.DS_Store
+
+# Docker
+.docker/
+
+# Logs
+*.log
+logs/

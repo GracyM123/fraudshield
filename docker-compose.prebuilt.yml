@@ -1,0 +1,58 @@
+version: '3.9'
+
+# Use this after running: 
+#   cd frontend && npm install && npm run build && cd ..
+#   cd backend && mvn clean package -DskipTests && cd ..
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fraudshield-db
+    environment:
+      POSTGRES_DB: frauddb
+      POSTGRES_USER: frauduser
+      POSTGRES_PASSWORD: fraudpass
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U frauduser -d frauddb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.simple
+    container_name: fraudshield-api
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/frauddb
+      DATABASE_USER: frauduser
+      DATABASE_PASSWORD: fraudpass
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    image: nginx:alpine
+    container_name: fraudshield-ui
+    ports:
+      - "3000:80"
+    volumes:
+      - ./frontend/dist:/usr/share/nginx/html:ro
+      - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+
+networks:
+  default:
+    name: fraudshield-network
