@@ -2,15 +2,15 @@
 
 > A production-grade financial transaction anomaly detection system built with Java 17, Spring Boot 3, PostgreSQL, and React/TypeScript. Processes transactions in real-time using a multi-rule statistical engine and surfaces anomalies to a live analyst dashboard.
 
-**[🔴 Live Demo](https://your-frontend.railway.app)** · **[📡 API Docs](https://your-backend.railway.app/api/health)**
+[**🔴 Live Demo**](https://fraudshield-vercel-khao8diqz-gracym123s-projects.vercel.app/) · [**📡 API Docs**](https://fraudshield-api-jdd4.onrender.com/api/health)
 
----
+\---
 
 ## 📸 Dashboard Preview
 
 The dashboard displays a live feed of incoming transactions, flags anomalies in real-time, and allows analysts to review and resolve alerts — all updating every 3 seconds without a page refresh.
 
----
+\---
 
 ## 🏗️ Architecture
 
@@ -50,17 +50,17 @@ The dashboard displays a live feed of incoming transactions, flags anomalies in 
 │                                                                 │
 │  transactions table          alerts table                       │
 │  ├── id (UUID PK)            ├── id (UUID PK)                   │
-│  ├── account_id (indexed)    ├── transaction_id (FK)            │
+│  ├── account\\\_id (indexed)    ├── transaction\\\_id (FK)            │
 │  ├── amount                  ├── severity                       │
-│  ├── country_code            ├── alert_type                     │
-│  ├── is_flagged (indexed)    ├── risk_score                     │
-│  ├── risk_score              ├── status (OPEN/RESOLVED)         │
-│  ├── flag_reasons            └── created_at (indexed)           │
-│  └── created_at (indexed)                                       │
+│  ├── country\\\_code            ├── alert\\\_type                     │
+│  ├── is\\\_flagged (indexed)    ├── risk\\\_score                     │
+│  ├── risk\\\_score              ├── status (OPEN/RESOLVED)         │
+│  ├── flag\\\_reasons            └── created\\\_at (indexed)           │
+│  └── created\\\_at (indexed)                                       │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
----
+\---
 
 ## 🔍 Anomaly Detection Engine
 
@@ -71,7 +71,7 @@ The core of the system is a **multi-rule weighted scoring engine** in `AnomalyDe
 Detects amounts that are statistically unusual compared to an account's 30-day transaction history.
 
 ```
-z = |amount - account_mean| / account_stddev
+z = |amount - account\\\_mean| / account\\\_stddev
 
 if z > 2.5 → flag with risk contribution ∝ z-score
 ```
@@ -85,10 +85,10 @@ Falls back to global population statistics for new accounts with insufficient hi
 Detects card-testing patterns: rapid successive small transactions used to verify stolen card numbers before committing fraud.
 
 ```
-count(transactions, account_id, last 60 seconds) ≥ 5 → flag
+count(transactions, account\\\_id, last 60 seconds) ≥ 5 → flag
 ```
 
-**Why it matters:** Card-testing fraud accounts for ~30% of fraud losses at major card networks. Velocity checks are the primary defense.
+**Why it matters:** Card-testing fraud accounts for \~30% of fraud losses at major card networks. Velocity checks are the primary defense.
 
 ### Rule 3 — Structuring Detection · 20% weight
 
@@ -117,7 +117,7 @@ isFlagged  = finalScore > 0.45 OR any rule fired
 severity   = finalScore > 0.75 → CRITICAL | > 0.55 → HIGH | > 0.35 → MEDIUM | else LOW
 ```
 
----
+\---
 
 ## 🚀 Running Locally
 
@@ -133,25 +133,26 @@ That's it. Open **http://localhost:3000**
 
 The system immediately starts generating simulated transactions every 4 seconds. Within 60 seconds you'll see anomalies being flagged in real-time.
 
----
+\---
 
 ## 📡 API Reference
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/transactions` | Submit a transaction for analysis |
-| `GET`  | `/api/transactions` | Latest 50 transactions |
-| `GET`  | `/api/transactions/flagged` | All flagged transactions |
-| `GET`  | `/api/alerts` | Latest 20 alerts |
-| `GET`  | `/api/alerts/open` | Open alerts only |
-| `PATCH`| `/api/alerts/{id}/resolve` | Resolve an alert |
-| `GET`  | `/api/stats` | Dashboard statistics |
-| `GET`  | `/api/health` | Health check |
+|Method|Endpoint|Description|
+|-|-|-|
+|`POST`|`/api/transactions`|Submit a transaction for analysis|
+|`GET`|`/api/transactions`|Latest 50 transactions|
+|`GET`|`/api/transactions/flagged`|All flagged transactions|
+|`GET`|`/api/alerts`|Latest 20 alerts|
+|`GET`|`/api/alerts/open`|Open alerts only|
+|`PATCH`|`/api/alerts/{id}/resolve`|Resolve an alert|
+|`GET`|`/api/stats`|Dashboard statistics|
+|`GET`|`/api/health`|Health check|
 
 **Submit a transaction:**
+
 ```bash
-curl -X POST http://localhost:8080/api/transactions \
-  -H "Content-Type: application/json" \
+curl -X POST http://localhost:8080/api/transactions \\\\
+  -H "Content-Type: application/json" \\\\
   -d '{
     "accountId": "ACC-1001",
     "amount": 9750.00,
@@ -164,45 +165,45 @@ curl -X POST http://localhost:8080/api/transactions \
   }'
 ```
 
----
+\---
 
 ## 🧪 Testing the Detectors
 
 ```bash
 # Trigger structuring detector ($9,750 is just below $10k threshold)
-curl -X POST http://localhost:8080/api/transactions \
-  -H "Content-Type: application/json" \
+curl -X POST http://localhost:8080/api/transactions \\\\
+  -H "Content-Type: application/json" \\\\
   -d '{"accountId":"ACC-TEST","amount":9750.00,"currency":"USD","merchantName":"Cash","merchantCategory":"ATM","countryCode":"US","city":"NYC","transactionType":"WITHDRAWAL"}'
 
 # Trigger geography detector (Nigeria country code)
-curl -X POST http://localhost:8080/api/transactions \
-  -H "Content-Type: application/json" \
+curl -X POST http://localhost:8080/api/transactions \\\\
+  -H "Content-Type: application/json" \\\\
   -d '{"accountId":"ACC-TEST","amount":250.00,"currency":"USD","merchantName":"Online Store","merchantCategory":"RETAIL","countryCode":"NG","city":"Lagos","transactionType":"PURCHASE"}'
 
 # Trigger velocity detector (run this 6 times in quick succession)
 for i in {1..6}; do
-  curl -s -X POST http://localhost:8080/api/transactions \
-    -H "Content-Type: application/json" \
-    -d '{"accountId":"ACC-VELOCITY","amount":15.99,"currency":"USD","merchantName":"Test Store","merchantCategory":"RETAIL","countryCode":"US","city":"NYC","transactionType":"PURCHASE"}' &
+  curl -s -X POST http://localhost:8080/api/transactions \\\\
+    -H "Content-Type: application/json" \\\\
+    -d '{"accountId":"ACC-VELOCITY","amount":15.99,"currency":"USD","merchantName":"Test Store","merchantCategory":"RETAIL","countryCode":"US","city":"NYC","transactionType":"PURCHASE"}' \\\&
 done
 ```
 
----
+\---
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology | Why |
-|-------|-----------|-----|
-| Backend | Java 17, Spring Boot 3.2 | Type safety, mature ecosystem, industry standard in financial services |
-| Database | PostgreSQL 16 | ACID compliance, native UUID support, excellent indexing for time-series queries |
-| ORM | Spring Data JPA + Hibernate | Reduces boilerplate, native query support for statistical functions |
-| Frontend | React 18 + TypeScript | Component reusability, type-safe API contracts |
-| Charts | Recharts | Lightweight, composable, React-native |
-| Build | Maven 3.9 | Reproducible builds, dependency management |
-| Containerization | Docker + Compose | Environment parity, one-command deployment |
-| Deployment | Railway | Docker-native PaaS, free tier, automatic HTTPS |
+|Layer|Technology|Why|
+|-|-|-|
+|Backend|Java 17, Spring Boot 3.2|Type safety, mature ecosystem, industry standard in financial services|
+|Database|PostgreSQL 16|ACID compliance, native UUID support, excellent indexing for time-series queries|
+|ORM|Spring Data JPA + Hibernate|Reduces boilerplate, native query support for statistical functions|
+|Frontend|React 18 + TypeScript|Component reusability, type-safe API contracts|
+|Charts|Recharts|Lightweight, composable, React-native|
+|Build|Maven 3.9|Reproducible builds, dependency management|
+|Containerization|Docker + Compose|Environment parity, one-command deployment|
+|Deployment|Vercel + Render|Docker-native PaaS, free tier, automatic HTTPS|
 
----
+\---
 
 ## 🔧 Key Design Decisions
 
@@ -216,35 +217,36 @@ Weighted composite scoring reduces false positive rates. A transaction from Nige
 All detection thresholds (`zscore.threshold`, `velocity.max-transactions-per-minute`, `geography.suspicious-countries`) are in `application.properties` and can be overridden via environment variables at runtime. This allows tuning without redeployment — critical in production fraud systems where thresholds need frequent adjustment.
 
 **Database indexing strategy:**
-Three indexes on the transactions table: `account_id` (for per-account statistical queries), `created_at` (for time-window velocity checks), and `is_flagged` (for dashboard filtered views). The statistical queries (AVG, STDDEV) run against the indexed account+time range, keeping them under 10ms even with 100k+ rows.
+Three indexes on the transactions table: `account\\\_id` (for per-account statistical queries), `created\\\_at` (for time-window velocity checks), and `is\\\_flagged` (for dashboard filtered views). The statistical queries (AVG, STDDEV) run against the indexed account+time range, keeping them under 10ms even with 100k+ rows.
 
----
+\---
 
 ## 📈 Performance Characteristics
 
-| Metric | Value |
-|--------|-------|
-| Transaction analysis latency | < 15ms p99 (local PostgreSQL) |
-| Scheduler throughput | ~1-3 tx/4 seconds (simulated) |
-| Dashboard refresh | 3-second polling |
-| Database query time (statistical) | < 10ms with proper indexes |
+|Metric|Value|
+|-|-|
+|Transaction analysis latency|< 15ms p99 (local PostgreSQL)|
+|Scheduler throughput|\~1-3 tx/4 seconds (simulated)|
+|Dashboard refresh|3-second polling|
+|Database query time (statistical)|< 10ms with proper indexes|
 
----
+\---
 
 ## 🗺️ What I'd Add With More Time
 
-- **Apache Kafka** for high-throughput async ingestion (drop-in replacement for the scheduler)
-- **Machine learning layer**: Isolation Forest or Autoencoder for unsupervised anomaly detection on feature vectors
-- **Redis caching** for velocity counters (avoid DB query per transaction for the hot path)
-- **Terraform** IaC for AWS deployment (ECS + RDS + ElastiCache)
-- **JWT authentication** on the API and role-based dashboard access
-- **Webhook notifications** (email/Slack) when CRITICAL alerts fire
-- **Backtesting framework** to evaluate detector precision/recall against labelled fraud datasets
+* **Apache Kafka** for high-throughput async ingestion (drop-in replacement for the scheduler)
+* **Machine learning layer**: Isolation Forest or Autoencoder for unsupervised anomaly detection on feature vectors
+* **Redis caching** for velocity counters (avoid DB query per transaction for the hot path)
+* **Terraform** IaC for AWS deployment (ECS + RDS + ElastiCache)
+* **JWT authentication** on the API and role-based dashboard access
+* **Webhook notifications** (email/Slack) when CRITICAL alerts fire
+* **Backtesting framework** to evaluate detector precision/recall against labelled fraud datasets
 
----
+\---
 
 ## 👩‍💻 Author
 
-**Gracy Maisuriya** · [LinkedIn](https://linkedin.com/in/yourprofile) · [GitHub](https://github.com/yourusername)
+**Gracy Maisuriya** · [LinkedIn](https://www.linkedin.com/in/gracy-maisuriya/) · [GitHub](https://github.com/GracyM123)
 
 *Built to demonstrate production-grade backend engineering, statistical anomaly detection, and full-stack deployment — skills directly applicable to financial services engineering roles.*
+
