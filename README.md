@@ -124,7 +124,7 @@ severity   = finalScore > 0.75 → CRITICAL | > 0.55 → HIGH | > 0.35 → MEDIU
 **Prerequisites:** Docker + Docker Compose
 
 ```bash
-git clone https://github.com/yourusername/fraudshield.git
+git clone https://github.com/GracyM123/fraudshield.git
 cd fraudshield
 docker compose up --build
 ```
